@@ -9,7 +9,7 @@ Options:
 optional arguments:
   -h, --help            show this help message and exit
   -c CONFIG, --config CONFIG
-                        file path to ffplayout.conf
+                        file path to ffplayout.yml
   -d DATE [DATE ...], --date DATE [DATE ...]
                         playlist date (yyyy-mm-dd)
   -t LENGTH, --length LENGTH
