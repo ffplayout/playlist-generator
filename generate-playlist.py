@@ -14,7 +14,7 @@ import yaml
 stdin_parser = ArgumentParser(description='python and ffmpeg based playout')
 
 stdin_parser.add_argument(
-    '-c', '--config', help='file path to ffplayout.conf'
+    '-c', '--config', help='file path to ffplayout.yml'
 )
 
 stdin_parser.add_argument(
@@ -42,12 +42,13 @@ def read_config(path):
         return yaml.safe_load(config_file)
 
 
-if ARGS.config:
+if ARGS.config and os.path.isfile(ARGS.config):
     CFG = read_config(ARGS.config)
 elif os.path.isfile('/etc/ffplayout/ffplayout.yml'):
     CFG = read_config('/etc/ffplayout/ffplayout.yml')
 else:
-    CFG = read_config('ffplayout.yml')
+    print('No config file found!\nNo playlist generation is possible...')
+    exit()
 
 
 class MediaProbe(object):
@@ -165,7 +166,7 @@ def main():
 
                 counter += duration
 
-                if (ARGS.length and counter >= ARGS.length)\
+                if (ARGS.length and counter >= ARGS.length) \
                         or counter >= 86400:
                     loop = False
                     break
