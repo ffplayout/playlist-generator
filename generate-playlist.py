@@ -4,6 +4,7 @@
 import json
 import os
 import random
+import sys
 from argparse import ArgumentParser
 from datetime import date, datetime, timedelta
 from glob import glob
@@ -48,7 +49,7 @@ elif os.path.isfile('/etc/ffplayout/ffplayout.yml'):
     CFG = read_config('/etc/ffplayout/ffplayout.yml')
 else:
     print('No config file found!\nNo playlist generation is possible...')
-    exit()
+    sys.exit(1)
 
 
 class MediaProbe(object):
@@ -82,6 +83,15 @@ class MediaProbe(object):
 
             if stream['codec_type'] == 'video':
                 self.video.append(stream)
+
+
+def str_to_sec(s):
+    s = s.split(':')
+    try:
+        return float(s[0]) * 3600 + float(s[1]) * 60 + float(s[2])
+    except ValueError:
+        print('Wrong time format!')
+        sys.exit(1)
 
 
 def daterange():
@@ -128,8 +138,19 @@ def write_json(data):
 
 def main():
     source = ARGS.input if ARGS.input else CFG['storage']['path']
+    length = ARGS.length if ARGS.length else CFG['playlist']['length']
+    length_sec = str_to_sec(length)
     ext = CFG['storage']['extensions']
+    filler = CFG['storage']['filler_clip']
     probe = MediaProbe()
+
+    if os.path.isfile(filler):
+        probe.load(filler)
+        try:
+            filler_duration = float(probe.format.get('duration'))
+        except (ValueError, TypeError):
+            print('Can not read filler duration')
+            sys.exit(1)
 
     for _date in daterange():
         counter = 0
@@ -137,11 +158,12 @@ def main():
         data = {
             'channel': 'Channel 1',
             'date': _date,
-            'length': ARGS.length if ARGS.length else '24:00:00',
+            'length': length,
             'program': []
         }
 
         store = glob(os.path.join(source, '**', f'*{ext}'), recursive=True)
+        shortest = 7200
 
         while loop:
             random.shuffle(store)
@@ -154,6 +176,9 @@ def main():
                 except (ValueError, TypeError):
                     continue
 
+                if duration < shortest:
+                    shortest = duration
+
                 node = {
                     'in': 0,
                     'out': duration,
@@ -162,14 +187,30 @@ def main():
                     'source': clip
                 }
 
-                data['program'].append(node)
+                if length_sec > counter + duration + filler_duration:
+                    counter += duration
+                    data['program'].append(node)
+                elif counter + duration + filler_duration > \
+                        length_sec > counter + duration:
+                    counter += duration
+                    data['program'].append(node)
+                    out = length_sec - counter
 
-                counter += duration
+                    data['program'].append({
+                        'in': 0,
+                        'out': out,
+                        'duration': filler_duration,
+                        'category': '',
+                        'source': filler
+                    })
 
-                if (ARGS.length and counter >= ARGS.length) \
-                        or counter >= 86400:
+                    counter += out
+
                     loop = False
                     break
+
+            if counter + shortest > length_sec:
+                loop = False
 
         write_json(data)
 
