@@ -140,7 +140,7 @@ def main():
     source = ARGS.input if ARGS.input else CFG['storage']['path']
     length = ARGS.length if ARGS.length else CFG['playlist']['length']
     length_sec = str_to_sec(length)
-    ext = CFG['storage']['extensions']
+    extensions = CFG['storage']['extensions']
     filler = CFG['storage']['filler_clip']
     probe = MediaProbe()
 
@@ -162,7 +162,11 @@ def main():
             'program': []
         }
 
-        store = glob(os.path.join(source, '**', f'*{ext}'), recursive=True)
+        store = []
+
+        for ext in extensions:
+            store.extend(glob(os.path.join(source, '**', f'*{ext}'),
+                              recursive=True))
         shortest = 7200
 
         while loop:
