@@ -183,11 +183,13 @@ def main():
                 if duration < shortest:
                     shortest = duration
 
+                ct = 'advertisement' if 'advertisement' in clip.lower() else ''
+
                 node = {
                     'in': 0,
                     'out': duration,
                     'duration': duration,
-                    'category': '',
+                    'category': ct,
                     'source': clip
                 }
 
