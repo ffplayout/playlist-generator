@@ -164,9 +164,12 @@ def main():
 
         store = []
 
-        for ext in extensions:
-            store.extend(glob(os.path.join(source, '**', f'*{ext}'),
-                              recursive=True))
+        if os.path.isdir(source) :
+            for ext in extensions:
+                store.extend(glob(os.path.join(source, '**', f'*{ext}'), recursive=True))
+        else :
+            store.extend(line.strip() for line in open(source, "r"))
+
         shortest = 7200
 
         while loop:
