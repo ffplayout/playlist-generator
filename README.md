@@ -1,5 +1,7 @@
 # playlist-generator
 
+**This generator is not necessery anymore, because the ffplayout engine has now one included.** 
+
 This script loop over ramdomized files in given folder, and generate a playlist from it.
 
 
